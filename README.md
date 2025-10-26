@@ -13,7 +13,3 @@ Mononomics is a simple, command-line Python finance tracker that helps you manag
 
 ---
 
-## Installation
-1. Clone the repository:
-```bash
-git clone https://github.com/disposably-mono/Mononomics.git

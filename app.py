@@ -1,5 +1,4 @@
 import json
-import os
 
 # Finance Tracker
 # disposably-mono
@@ -20,18 +19,18 @@ DATA_FILE = "data.json"
 
 
 def load_data():
-    if not os.path.exists(DATA_FILE):
-        return {"users": {}}
-    with open(DATA_FILE, "r") as f:
-        try:
-            return json.load(f)
-        except json.JSONDecodeError:
-            return {"users": {}}
+    try:
+        with open(DATA_FILE, "r") as file:
+            data = json.load(file)
+            return data["balance"], data["transactions"]
+    except (FileNotFoundError, json.JSONDecodeError):
+        return INITIAL_BALANCE, []
 
 
-def save_data(data):
-    with open(DATA_FILE, "w") as f:
-        json.dump(data, f, indent=4)
+def save_data(balance, transactions):
+    data = {"balance": balance, "transactions": transactions}
+    with open(DATA_FILE, "w") as file:
+        json.dump(data, file, indent=4)
 
 
 # ========================

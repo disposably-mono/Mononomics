@@ -1,0 +1,15 @@
+{
+    "balance": 800.0,
+    "transactions": [
+        {
+            "transaction_type": "income",
+            "amount": 500.0,
+            "description": "Allowance"
+        },
+        {
+            "transaction_type": "income",
+            "amount": 300.0,
+            "description": "Stipend"
+        }
+    ]
+}

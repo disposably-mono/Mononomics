@@ -24,13 +24,17 @@ def load_data():
             data = json.load(file)
             return data["balance"], data["transactions"]
     except (FileNotFoundError, json.JSONDecodeError):
+        print("No data file found or data corrupted. Starting fresh.")
         return INITIAL_BALANCE, []
 
 
 def save_data(balance, transactions):
     data = {"balance": balance, "transactions": transactions}
-    with open(DATA_FILE, "w") as file:
-        json.dump(data, file, indent=4)
+    try:
+        with open(DATA_FILE, "w") as file:
+            json.dump(data, file, indent=4)
+    except OSError as e:
+        print(f"Error saving data: {e}")
 
 
 # ========================
@@ -39,15 +43,19 @@ def save_data(balance, transactions):
 
 
 def authenticate_user(username, password):
-    login_username = str(input("What is your username? "))
-    login_password = str(input("What is your password? "))
+    while True:
+        login_username = input("What is your username? ").strip()
+        login_password = input("What is your password? ").strip()
 
-    if username == login_username and password == login_password:
-        print("Login successful!")
-        return True
-    elif username != login_username or password != login_password:
-        print("Authentication failed!")
-        return False
+        if not login_username or not login_password:
+            print("Username and password cannot be empty.")
+            continue
+
+        if username == login_username and password == login_password:
+            print("Login successful!")
+            return True
+        else:
+            print("Authentication failed! Try again.")
 
 
 # ===================
@@ -61,95 +69,128 @@ def view_balance(balance):
 
 
 def view_transactions():
-    for i, transaction in enumerate(TRANSACTIONS, start=1):
-        print(f"{i}. {transaction}")
+    if not TRANSACTIONS:
+        print("No transactions found.")
+        return
+
+    print("\n=== Transactions ===")
+    for i, t in enumerate(TRANSACTIONS, start=1):
+        print(
+            f"[{i}] {t['transaction_type'].upper():<8} ₱{t['amount']:>8.2f}  —  {t['description']}"
+        )
 
 
 def process_income(balance):
-    income = float(input("How much did you earn today: "))
-    description = str(input("Enter a short description: "))
+    try:
+        income = float(input("How much did you earn today: "))
+    except ValueError:
+        print("Invalid input. Please enter a number.")
+        return balance
 
-    balance = balance + income
-    transaction_type = "income"
+    description = input("Enter a short description: ").strip()
 
+    balance += income
     transaction = {
-        "transaction_type": transaction_type,
+        "transaction_type": "income",
         "amount": income,
         "description": description,
     }
 
     TRANSACTIONS.append(transaction)
-
+    print("Income added successfully!")
     print("Your updated balance is:", balance)
     return balance
 
 
 def process_expense(balance):
-    expense = float(input("How much did you spend today: "))
-    description = str(input("Enter a short description: "))
+    try:
+        expense = float(input("How much did you spend today: "))
+    except ValueError:
+        print("Invalid input. Please enter a number.")
+        return balance
 
-    balance = balance - expense
-    transaction_type = "expense"
+    description = input("Enter a short description: ").strip()
 
+    balance -= expense
     transaction = {
-        "transaction_type": transaction_type,
+        "transaction_type": "expense",
         "amount": expense,
         "description": description,
     }
 
     TRANSACTIONS.append(transaction)
-
+    print("Expense added successfully!")
     print("Your updated balance is:", balance)
     return balance
 
 
 def remove_transaction(balance):
+    if not TRANSACTIONS:
+        print("No transactions to remove.")
+        return balance
+
     view_transactions()
 
-    target_id = int(
-        input("Enter the ID number of the transaction you want to remove: ")
-    )
-    transaction = TRANSACTIONS[target_id - 1]
+    try:
+        target_id = int(input("Enter the ID number of the transaction to remove: "))
+        transaction = TRANSACTIONS[target_id - 1]
+    except (ValueError, IndexError):
+        print("Invalid ID. Please enter a valid transaction number.")
+        return balance
 
     if transaction["transaction_type"] == "income":
         balance -= transaction["amount"]
-    if transaction["transaction_type"] == "expense":
+    elif transaction["transaction_type"] == "expense":
         balance += transaction["amount"]
 
     print(f"Removing {transaction}...")
     TRANSACTIONS.pop(target_id - 1)
-
+    print("Transaction removed successfully!")
     print("Your updated balance is:", balance)
     return balance
 
 
 def update_transaction(balance):
+    if not TRANSACTIONS:
+        print("No transactions to update.")
+        return balance
+
     view_transactions()
 
-    target_id = int(
-        input("Enter the ID number of the transaction you want to update: ")
-    )
-    transaction = TRANSACTIONS[target_id - 1]
+    try:
+        target_id = int(input("Enter the ID number of the transaction to update: "))
+        transaction = TRANSACTIONS[target_id - 1]
+    except (ValueError, IndexError):
+        print("Invalid ID. Please enter a valid transaction number.")
+        return balance
 
     if transaction["transaction_type"] == "income":
         balance -= transaction["amount"]
-    if transaction["transaction_type"] == "expense":
+    elif transaction["transaction_type"] == "expense":
         balance += transaction["amount"]
 
     print(f"Updating {transaction}...")
     TRANSACTIONS.pop(target_id - 1)
 
     new_type = input("Is this an income or expense? ").lower().strip()
-    new_amount = float(input("Enter the new amount: "))
-    new_description = input("Enter a short description: ")
+    if new_type not in ["income", "expense"]:
+        print("Invalid transaction type. Update cancelled.")
+        TRANSACTIONS.insert(target_id - 1, transaction)
+        return balance
+
+    try:
+        new_amount = float(input("Enter the new amount: "))
+    except ValueError:
+        print("Invalid amount. Update cancelled.")
+        TRANSACTIONS.insert(target_id - 1, transaction)
+        return balance
+
+    new_description = input("Enter a short description: ").strip()
 
     if new_type == "income":
         balance += new_amount
-    elif new_type == "expense":
-        balance -= new_amount
     else:
-        print("Invalid transaction type. No changes made.")
-        return balance
+        balance -= new_amount
 
     new_transaction = {
         "transaction_type": new_type,
@@ -158,7 +199,7 @@ def update_transaction(balance):
     }
 
     TRANSACTIONS.insert(target_id - 1, new_transaction)
-
+    print("Transaction updated successfully!")
     print("Your updated balance is:", balance)
     return balance
 
@@ -169,7 +210,7 @@ def update_transaction(balance):
 
 
 def display_menu():
-    print("== Finance Tracker ==")
+    print("\n== Mononomics Finance Tracker ==")
     print("1. Check Current Balance")
     print("2. Add Income")
     print("3. Add Expense")
@@ -211,8 +252,10 @@ def main():
             view_transactions()
         elif choice == "5":
             balance = update_transaction(balance)
+            save_data(balance, TRANSACTIONS)
         elif choice == "6":
             balance = remove_transaction(balance)
+            save_data(balance, TRANSACTIONS)
         elif choice == "7":
             save_data(balance, TRANSACTIONS)
             print("Finances tracked successfully. Stay wealthy!")
@@ -220,4 +263,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nProgram exited manually. Goodbye!")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")

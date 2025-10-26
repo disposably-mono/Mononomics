@@ -1,6 +1,6 @@
 import json
 
-# Finance Tracker
+# Monomonics Finance Tracker
 # disposably-mono
 
 # =========================
@@ -40,7 +40,7 @@ def save_data(balance, transactions):
 
 def authenticate_user(username, password):
     login_username = str(input("What is your username? "))
-    login_password = str(input("What is your password "))
+    login_password = str(input("What is your password? "))
 
     if username == login_username and password == login_password:
         print("Login successful!")
@@ -56,13 +56,13 @@ def authenticate_user(username, password):
 
 
 def view_balance(balance):
-    print("Your currrent balance is: ", balance)
+    print("Your current balance is:", balance)
     return balance
 
 
 def view_transactions():
-    for transaction in TRANSACTIONS:
-        print(transaction)
+    for i, transaction in enumerate(TRANSACTIONS, start=1):
+        print(f"{i}. {transaction}")
 
 
 def process_income(balance):
@@ -80,7 +80,7 @@ def process_income(balance):
 
     TRANSACTIONS.append(transaction)
 
-    print("Your updated balance is: ", balance)
+    print("Your updated balance is:", balance)
     return balance
 
 
@@ -99,7 +99,67 @@ def process_expense(balance):
 
     TRANSACTIONS.append(transaction)
 
-    print("Your updated balance is: ", balance)
+    print("Your updated balance is:", balance)
+    return balance
+
+
+def remove_transaction(balance):
+    view_transactions()
+
+    target_id = int(
+        input("Enter the ID number of the transaction you want to remove: ")
+    )
+    transaction = TRANSACTIONS[target_id - 1]
+
+    if transaction["transaction_type"] == "income":
+        balance -= transaction["amount"]
+    if transaction["transaction_type"] == "expense":
+        balance += transaction["amount"]
+
+    print(f"Removing {transaction}...")
+    TRANSACTIONS.pop(target_id - 1)
+
+    print("Your updated balance is:", balance)
+    return balance
+
+
+def update_transaction(balance):
+    view_transactions()
+
+    target_id = int(
+        input("Enter the ID number of the transaction you want to update: ")
+    )
+    transaction = TRANSACTIONS[target_id - 1]
+
+    if transaction["transaction_type"] == "income":
+        balance -= transaction["amount"]
+    if transaction["transaction_type"] == "expense":
+        balance += transaction["amount"]
+
+    print(f"Updating {transaction}...")
+    TRANSACTIONS.pop(target_id - 1)
+
+    new_type = input("Is this an income or expense? ").lower().strip()
+    new_amount = float(input("Enter the new amount: "))
+    new_description = input("Enter a short description: ")
+
+    if new_type == "income":
+        balance += new_amount
+    elif new_type == "expense":
+        balance -= new_amount
+    else:
+        print("Invalid transaction type. No changes made.")
+        return balance
+
+    new_transaction = {
+        "transaction_type": new_type,
+        "amount": new_amount,
+        "description": new_description,
+    }
+
+    TRANSACTIONS.insert(target_id - 1, new_transaction)
+
+    print("Your updated balance is:", balance)
     return balance
 
 
@@ -109,12 +169,14 @@ def process_expense(balance):
 
 
 def display_menu():
-    print("==Finance Tracker==")
+    print("== Finance Tracker ==")
     print("1. Check Current Balance")
     print("2. Add Income")
     print("3. Add Expense")
     print("4. Check Transactions")
-    print("5. Exit")
+    print("5. Update Transaction")
+    print("6. Delete Transaction")
+    print("7. Exit")
 
 
 # ======================
@@ -135,7 +197,7 @@ def main():
     while True:
         display_menu()
 
-        choice = input("What would you like to do?")
+        choice = input("What would you like to do? ")
 
         if choice == "1":
             view_balance(balance)
@@ -148,8 +210,12 @@ def main():
         elif choice == "4":
             view_transactions()
         elif choice == "5":
+            balance = update_transaction(balance)
+        elif choice == "6":
+            balance = remove_transaction(balance)
+        elif choice == "7":
             save_data(balance, TRANSACTIONS)
-            print("Finances tracked successfully, stay wealthy!")
+            print("Finances tracked successfully. Stay wealthy!")
             break
 
 

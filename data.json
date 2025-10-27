@@ -1,0 +1,11 @@
+{
+    "balance": 440.0,
+    "transactions": [
+        {
+            "transaction_type": "income",
+            "amount": 440.0,
+            "description": "Initial Balance",
+            "timestamp": "2025-10-27 16:39:48"
+        }
+    ]
+}

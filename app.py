@@ -1,7 +1,9 @@
-import json
-
 # Monomonics Finance Tracker
-# disposably-mono
+# disposably-monom
+
+import json
+from datetime import datetime
+
 
 # =========================
 # CONFIGURATION & CONSTANTS
@@ -75,8 +77,9 @@ def view_transactions():
 
     print("\n=== Transactions ===")
     for i, t in enumerate(TRANSACTIONS, start=1):
+        timestamp = t.get("timestamp", "N/A")
         print(
-            f"[{i}] {t['transaction_type'].upper():<8} ₱{t['amount']:>8.2f}  —  {t['description']}"
+            f"[{i}] {t['transaction_type'].upper():<8} ₱{t['amount']:>8.2f}  —  {t['description']:<30} | {timestamp}"
         )
 
 
@@ -94,6 +97,7 @@ def process_income(balance):
         "transaction_type": "income",
         "amount": income,
         "description": description,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
 
     TRANSACTIONS.append(transaction)
@@ -116,6 +120,7 @@ def process_expense(balance):
         "transaction_type": "expense",
         "amount": expense,
         "description": description,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
 
     TRANSACTIONS.append(transaction)
@@ -128,22 +133,22 @@ def remove_transaction(balance):
     if not TRANSACTIONS:
         print("No transactions to remove.")
         return balance
-
     view_transactions()
-
     try:
         target_id = int(input("Enter the ID number of the transaction to remove: "))
         transaction = TRANSACTIONS[target_id - 1]
     except (ValueError, IndexError):
         print("Invalid ID. Please enter a valid transaction number.")
         return balance
-
     if transaction["transaction_type"] == "income":
         balance -= transaction["amount"]
     elif transaction["transaction_type"] == "expense":
         balance += transaction["amount"]
 
-    print(f"Removing {transaction}...")
+    timestamp = transaction.get("timestamp", "N/A")
+    print(
+        f"Removing: {transaction['transaction_type'].upper():<8} ₱{transaction['amount']:>8.2f}  —  {transaction['description']:<30} | {timestamp}"
+    )
     TRANSACTIONS.pop(target_id - 1)
     print("Transaction removed successfully!")
     print("Your updated balance is:", balance)
@@ -154,22 +159,22 @@ def update_transaction(balance):
     if not TRANSACTIONS:
         print("No transactions to update.")
         return balance
-
     view_transactions()
-
     try:
         target_id = int(input("Enter the ID number of the transaction to update: "))
         transaction = TRANSACTIONS[target_id - 1]
     except (ValueError, IndexError):
         print("Invalid ID. Please enter a valid transaction number.")
         return balance
-
     if transaction["transaction_type"] == "income":
         balance -= transaction["amount"]
     elif transaction["transaction_type"] == "expense":
         balance += transaction["amount"]
 
-    print(f"Updating {transaction}...")
+    timestamp = transaction.get("timestamp", "N/A")
+    print(
+        f"Updating: {transaction['transaction_type'].upper():<8} ₱{transaction['amount']:>8.2f}  —  {transaction['description']:<30} | {timestamp}"
+    )
     TRANSACTIONS.pop(target_id - 1)
 
     new_type = input("Is this an income or expense? ").lower().strip()
@@ -177,27 +182,23 @@ def update_transaction(balance):
         print("Invalid transaction type. Update cancelled.")
         TRANSACTIONS.insert(target_id - 1, transaction)
         return balance
-
     try:
         new_amount = float(input("Enter the new amount: "))
     except ValueError:
         print("Invalid amount. Update cancelled.")
         TRANSACTIONS.insert(target_id - 1, transaction)
         return balance
-
     new_description = input("Enter a short description: ").strip()
-
     if new_type == "income":
         balance += new_amount
     else:
         balance -= new_amount
-
     new_transaction = {
         "transaction_type": new_type,
         "amount": new_amount,
         "description": new_description,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
-
     TRANSACTIONS.insert(target_id - 1, new_transaction)
     print("Transaction updated successfully!")
     print("Your updated balance is:", balance)
